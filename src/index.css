@@ -1,0 +1,20 @@
+@import "tailwindcss";
+:root {
+  --medical-blue: #0f5b78;
+  --medical-blue-light: #4fa3b8;
+  --medical-light: #eaf6f8;
+  --medical-navy: #123044;
+  --medical-bg: #f7fafc;
+  --medical-text: #526675;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--medical-bg);
+  color: var(--medical-navy);
+  font-family: Inter, system-ui, sans-serif;
+}

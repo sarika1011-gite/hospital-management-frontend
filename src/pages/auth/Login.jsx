@@ -273,16 +273,6 @@ function Login() {
                 </div>
               </div>
 
-              {/* FORGOT PASSWORD */}
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  className="text-sm font-semibold text-[#0F5B78] hover:text-[#123044]"
-                >
-                  Forgot Password?
-                </button>
-              </div>
-
               {/* LOGIN */}
               <button
                 type="submit"

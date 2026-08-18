@@ -1,259 +1,358 @@
-import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import {
-  FaArrowLeft,
-  FaUserMd,
-  FaCalendarCheck,
-  FaStethoscope,
-} from "react-icons/fa";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import api from "../services/api";
 
-const departments = {
-  "general-medicine": {
-    name: "General Medicine",
-    description:
-      "Comprehensive diagnosis and treatment for common and complex medical conditions.",
-    services: [
-      "General health checkups",
-      "Fever and infections treatment",
-      "Diabetes management",
-      "Blood pressure management",
-      "Preventive healthcare",
-    ],
-  },
-
-  cardiology: {
-    name: "Cardiology",
-    description:
-      "Specialized care for heart and cardiovascular conditions with experienced specialists.",
-    services: [
-      "Heart health checkups",
-      "ECG and cardiac evaluation",
-      "Blood pressure management",
-      "Heart disease consultation",
-      "Cardiac risk assessment",
-    ],
-  },
-
-  orthopedics: {
-    name: "Orthopedics",
-    description:
-      "Expert diagnosis and treatment for bones, joints, muscles and orthopedic conditions.",
-    services: [
-      "Bone and joint consultation",
-      "Fracture treatment",
-      "Arthritis management",
-      "Back and neck pain treatment",
-      "Sports injury care",
-    ],
-  },
-
-  pediatrics: {
-    name: "Pediatrics",
-    description:
-      "Complete healthcare services for infants, children and teenagers.",
-    services: [
-      "Child health checkups",
-      "Vaccination guidance",
-      "Growth monitoring",
-      "Childhood illness treatment",
-      "Nutritional guidance",
-    ],
-  },
-
-  neurology: {
-    name: "Neurology",
-    description:
-      "Specialized diagnosis and treatment of disorders affecting the brain, nerves and nervous system.",
-    services: [
-      "Neurological consultation",
-      "Headache and migraine care",
-      "Seizure evaluation",
-      "Nerve disorder treatment",
-      "Stroke assessment",
-    ],
-  },
-
-  ent: {
-    name: "ENT",
-    description:
-      "Specialized care for ear, nose and throat related conditions.",
-    services: [
-      "Ear infection treatment",
-      "Hearing evaluation",
-      "Sinus treatment",
-      "Throat infection treatment",
-      "ENT consultations",
-    ],
-  },
-
-  dermatology: {
-    name: "Dermatology",
-    description: "Expert care for skin, hair and nail related conditions.",
-    services: [
-      "Skin consultations",
-      "Acne treatment",
-      "Hair and scalp care",
-      "Allergy and skin infection treatment",
-      "General dermatology",
-    ],
-  },
-
-  dental: {
-    name: "Dental",
-    description: "Complete dental care for maintaining healthy teeth and gums.",
-    services: [
-      "Dental checkups",
-      "Teeth cleaning",
-      "Cavity treatment",
-      "Gum care",
-      "Oral health consultation",
-    ],
-  },
-
-  ophthalmology: {
-    name: "Ophthalmology",
-    description:
-      "Specialized eye care including vision assessment and treatment.",
-    services: [
-      "Eye checkups",
-      "Vision testing",
-      "Eye infection treatment",
-      "Glaucoma screening",
-      "General eye care",
-    ],
-  },
-};
-
-const normalizeDepartment = (value = "") => {
-  return decodeURIComponent(value)
-    .trim()
-    .toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-};
-
-export default function DepartmentDetails() {
+const DepartmentDetails = () => {
   const navigate = useNavigate();
-  const { departmentName } = useParams();
+  const location = useLocation();
+  const { id } = useParams();
 
-  const slug = normalizeDepartment(departmentName);
+  const [department, setDepartment] = useState(
+    location.state?.department || null,
+  );
+  const [loading, setLoading] = useState(!location.state?.department);
+  const [error, setError] = useState(false);
 
-  const department =
-    departments[slug] ||
-    departments[slug.replace("-and-", "-")] ||
-    Object.values(departments).find(
-      (item) => normalizeDepartment(item.name) === slug,
-    );
+  useEffect(() => {
+    // If department already came from Home,
+    // no need to call API again.
+    if (location.state?.department) {
+      setDepartment(location.state.department);
+      setLoading(false);
+      return;
+    }
 
-  if (!department) {
+    const fetchDepartment = async () => {
+      try {
+        setLoading(true);
+        setError(false);
+
+        // Fetch all departments and find the clicked ID.
+        // This works even after refresh / direct URL opening.
+        const response = await api.get("/departments");
+
+        const departments = response.data?.departments || [];
+
+        const foundDepartment = departments.find(
+          (item) => String(item._id) === String(id),
+        );
+
+        if (!foundDepartment) {
+          setError(true);
+          setDepartment(null);
+        } else {
+          setDepartment(foundDepartment);
+        }
+      } catch (err) {
+        console.error("Department details error:", err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDepartment();
+  }, [id, location.state]);
+
+  // =====================================================
+  // LOADING
+  // =====================================================
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-800 mb-3">
+          <div className="w-10 h-10 mx-auto mb-4 rounded-full border-4 border-slate-200 border-t-teal-600 animate-spin" />
+
+          <p className="text-slate-500">Loading department...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // =====================================================
+  // NOT FOUND
+  // =====================================================
+
+  if (error || !department) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-6">
+        <div className="text-center">
+          <div className="text-5xl mb-5">🏥</div>
+
+          <h1 className="text-3xl font-bold text-slate-900 mb-3">
             Department Not Found
           </h1>
 
-          <p className="text-gray-500 mb-6">
-            The requested department could not be found.
+          <p className="text-slate-500 mb-7">
+            The department you're looking for could not be found.
           </p>
 
           <button
             onClick={() => navigate("/")}
-            className="px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
+            className="text-teal-600 font-semibold hover:text-teal-700 transition"
           >
-            Back to Home
+            ← Back to Home
           </button>
         </div>
       </div>
     );
   }
 
-  const handleBookAppointment = () => {
-    navigate(
-      `/patient/book-appointment?department=${encodeURIComponent(
-        department.name,
-      )}`,
-    );
+  // =====================================================
+  // DEPARTMENT INFORMATION
+  // =====================================================
+
+  const name = department.name || "Medical Department";
+
+  const departmentInfo = {
+    cardiology: {
+      icon: "❤️",
+      overview:
+        "Our Cardiology department provides specialized care for heart and cardiovascular conditions.",
+      services: [
+        "Heart health evaluation",
+        "Cardiovascular diagnosis",
+        "Blood pressure management",
+        "Heart disease prevention",
+        "Cardiac monitoring",
+      ],
+    },
+
+    neurology: {
+      icon: "🧠",
+      overview:
+        "Our Neurology department focuses on diagnosis and treatment of disorders affecting the brain, nerves and nervous system.",
+      services: [
+        "Neurological evaluation",
+        "Headache and migraine care",
+        "Nerve disorder management",
+        "Neurological diagnosis",
+        "Nervous system care",
+      ],
+    },
+
+    dermatology: {
+      icon: "✨",
+      overview:
+        "Our Dermatology department provides professional diagnosis and treatment for skin, hair and nail conditions.",
+      services: [
+        "Skin condition diagnosis",
+        "Acne treatment",
+        "Hair and scalp care",
+        "Skin allergy care",
+        "General dermatological care",
+      ],
+    },
+
+    ent: {
+      icon: "👂",
+      overview:
+        "Our ENT department provides specialized treatment for conditions affecting the ear, nose and throat.",
+      services: [
+        "Ear care",
+        "Nose and sinus care",
+        "Throat treatment",
+        "Hearing evaluation",
+        "ENT condition diagnosis",
+      ],
+    },
+
+    pediatrics: {
+      icon: "👶",
+      overview:
+        "Our Pediatrics department provides healthcare services specially designed for infants, children and adolescents.",
+      services: [
+        "Child health checkups",
+        "Growth monitoring",
+        "Childhood illness care",
+        "General pediatric care",
+        "Adolescent healthcare",
+      ],
+    },
+
+    orthopedics: {
+      icon: "🦴",
+      overview:
+        "Our Orthopedics department focuses on diagnosis and treatment of bones, joints, muscles and movement-related conditions.",
+      services: [
+        "Bone and joint care",
+        "Muscle and ligament care",
+        "Fracture management",
+        "Joint pain evaluation",
+        "Musculoskeletal treatment",
+      ],
+    },
+
+    "general medicine": {
+      icon: "🩺",
+      overview:
+        "Our General Medicine department provides comprehensive diagnosis and treatment for common and general medical conditions.",
+      services: [
+        "General health evaluation",
+        "Common illness treatment",
+        "Fever and infection care",
+        "Health monitoring",
+        "Preventive healthcare",
+      ],
+    },
+
+    dentist: {
+      icon: "🦷",
+      overview:
+        "Our Dental department provides professional care for teeth, gums and overall oral health.",
+      services: [
+        "Dental checkups",
+        "Oral health evaluation",
+        "Tooth pain management",
+        "Gum care",
+        "General dental treatments",
+      ],
+    },
   };
 
+  const key = name.trim().toLowerCase();
+
+  const info = departmentInfo[key] || {
+    icon: "🏥",
+    overview:
+      department.description ||
+      "Our department provides specialized healthcare services delivered by experienced medical professionals.",
+    services: [
+      "Specialized medical consultation",
+      "Professional diagnosis",
+      "Treatment and care",
+      "Health monitoring",
+      "Preventive healthcare",
+    ],
+  };
+
+  // =====================================================
+  // UI
+  // =====================================================
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-700 to-cyan-600 text-white">
-        <div className="max-w-6xl mx-auto px-6 py-12">
+    <div className="min-h-screen bg-white">
+      {/* HERO */}
+      <section className="relative overflow-hidden py-20 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
           <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 mb-8 text-white/90 hover:text-white"
+            onClick={() => navigate("/")}
+            className="mb-10 text-slate-500 hover:text-teal-600 transition flex items-center gap-2"
           >
-            <FaArrowLeft />
-            Back
+            ← Back to Home
           </button>
 
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {department.name}
-          </h1>
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* LEFT */}
+            <div>
+              <div className="w-20 h-20 rounded-2xl bg-teal-50 flex items-center justify-center text-4xl mb-6">
+                {info.icon}
+              </div>
 
-          <p className="max-w-3xl text-lg text-white/90">
-            {department.description}
-          </p>
+              <p className="text-sm font-semibold tracking-widest text-teal-600 uppercase mb-3">
+                Medical Department
+              </p>
+
+              <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 capitalize">
+                {name}
+              </h1>
+
+              <p className="text-lg text-slate-500 leading-8">
+                {info.overview}
+              </p>
+            </div>
+
+            {/* RIGHT */}
+            <div className="rounded-3xl bg-slate-50 border border-slate-100 p-8 md:p-10">
+              <div className="flex items-center gap-4 mb-7">
+                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-2xl shadow-sm">
+                  🏥
+                </div>
+
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">
+                    About This Department
+                  </h2>
+
+                  <p className="text-sm text-slate-500">
+                    Specialized healthcare services
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-slate-600 leading-7">
+                {department.description || info.overview}
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Content */}
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        <div className="grid md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <FaUserMd className="text-3xl text-blue-600 mb-4" />
-            <h3 className="font-bold text-xl mb-2">Expert Doctors</h3>
-            <p className="text-gray-500">
-              Experienced specialists providing quality healthcare.
+      {/* SERVICES */}
+      <section className="py-16 px-6 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-sm font-semibold tracking-widest text-teal-600 uppercase mb-3">
+              What We Provide
+            </p>
+
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">
+              Department Services
+            </h2>
+
+            <p className="mt-4 text-slate-500 max-w-2xl mx-auto">
+              Our healthcare team provides professional and patient-focused
+              services in this department.
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <FaStethoscope className="text-3xl text-blue-600 mb-4" />
-            <h3 className="font-bold text-xl mb-2">Specialized Care</h3>
-            <p className="text-gray-500">
-              Professional diagnosis and treatment for your needs.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <FaCalendarCheck className="text-3xl text-blue-600 mb-4" />
-            <h3 className="font-bold text-xl mb-2">Easy Appointment</h3>
-            <p className="text-gray-500">
-              Book your appointment quickly and conveniently.
-            </p>
-          </div>
-        </div>
-
-        {/* Services */}
-        <div className="bg-white rounded-2xl shadow-sm p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">
-            Services Offered
-          </h2>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            {department.services.map((service, index) => (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {info.services.map((service, index) => (
               <div
                 key={index}
-                className="flex items-center gap-3 p-4 rounded-xl bg-gray-50"
+                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-teal-200 transition"
               >
-                <span className="w-2 h-2 rounded-full bg-blue-600" />
-                <span className="text-gray-700">{service}</span>
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 shrink-0 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600 font-bold">
+                    ✓
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-slate-800">{service}</h3>
+
+                    <p className="text-sm text-slate-500 mt-2 leading-6">
+                      Professional care and guidance from qualified healthcare
+                      professionals.
+                    </p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-
-          <button
-            onClick={handleBookAppointment}
-            className="mt-8 px-7 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
-          >
-            Book Appointment
-          </button>
         </div>
-      </div>
+      </section>
+
+      {/* BOTTOM */}
+      <section className="py-16 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="rounded-3xl bg-slate-50 border border-slate-100 p-8 md:p-12 text-center">
+            <div className="text-4xl mb-5">🩺</div>
+
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">
+              Quality Healthcare, Patient First
+            </h2>
+
+            <p className="max-w-2xl mx-auto text-slate-500 leading-7">
+              Our experienced healthcare professionals are committed to
+              providing compassionate, reliable and high-quality medical care to
+              every patient.
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   );
-}
+};
+
+export default DepartmentDetails;

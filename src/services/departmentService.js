@@ -13,14 +13,14 @@ export const getDepartmentById = async (id) => {
 };
 
 // Create department
-export const createDepartment = async (departmentData) => {
-  const response = await api.post("/departments", departmentData);
+export const createDepartment = async (data) => {
+  const response = await api.post("/departments", data);
   return response.data;
 };
 
 // Update department
-export const updateDepartment = async (id, departmentData) => {
-  const response = await api.put(`/departments/${id}`, departmentData);
+export const updateDepartment = async (id, data) => {
+  const response = await api.put(`/departments/${id}`, data);
   return response.data;
 };
 

@@ -1,109 +1,145 @@
-import {
-  FaHeartbeat,
-  FaBone,
-  FaBrain,
-  FaBaby,
-  FaEye,
-  FaTooth,
-} from "react-icons/fa";
-
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../services/api";
 
-const departments = [
-  {
-    icon: <FaHeartbeat size={32} />,
-    title: "Cardiology",
-    desc: "Heart care and treatment",
-    slug: "cardiology",
-  },
-  {
-    icon: <FaBone size={32} />,
-    title: "Orthopedics",
-    desc: "Bone & Joint Care",
-    slug: "orthopedics",
-  },
-  {
-    icon: <FaBrain size={32} />,
-    title: "Neurology",
-    desc: "Brain & Nervous System",
-    slug: "neurology",
-  },
-  {
-    icon: <FaBaby size={32} />,
-    title: "Pediatrics",
-    desc: "Child Healthcare",
-    slug: "pediatrics",
-  },
-  {
-    icon: <FaEye size={32} />,
-    title: "Ophthalmology",
-    desc: "Eye Care",
-    slug: "ophthalmology",
-  },
-  {
-    icon: <FaTooth size={32} />,
-    title: "Dental",
-    desc: "Dental Care",
-    slug: "dental",
-  },
-];
-
-function DepartmentSection() {
+const DepartmentSection = () => {
   const navigate = useNavigate();
 
-  return (
-    <section id="departments" className="py-24 bg-[#F7FAFC]">
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Section Heading */}
-        <div className="text-center max-w-2xl mx-auto">
-          <p className="text-[#4FA3B8] font-semibold tracking-widest uppercase">
-            Our Departments
-          </p>
+  const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-          <h2 className="mt-3 text-4xl md:text-5xl font-bold text-[#123044]">
-            Specialized Care For Every Need
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await api.get("/departments");
+
+        setDepartments(response.data?.departments || []);
+      } catch (error) {
+        console.error("Departments loading error:", error);
+        setDepartments([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
+
+  const handleDepartmentClick = (department) => {
+    navigate(`/departments/${department._id}`, {
+      state: {
+        department,
+      },
+    });
+  };
+
+  return (
+    <section id="departments" className="py-20 px-6 bg-slate-50">
+      <div className="max-w-7xl mx-auto">
+        {/* HEADER */}
+        <div className="text-center mb-14">
+          <span className="inline-flex items-center px-4 py-2 rounded-full bg-teal-50 text-teal-700 text-sm font-semibold tracking-wide mb-4">
+            OUR DEPARTMENTS
+          </span>
+
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900">
+            Explore Our <span className="text-teal-600">Departments</span>
           </h2>
 
-          <p className="text-[#526675] mt-5 leading-7">
-            Our specialized departments bring together experienced healthcare
-            professionals and modern medical care.
+          <p className="mt-5 max-w-2xl mx-auto text-slate-500 text-lg leading-7">
+            Explore our specialized medical departments and discover quality
+            healthcare services delivered by experienced professionals.
           </p>
         </div>
 
-        {/* Department Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-7 mt-16">
-          {departments.map((dept, index) => (
-            <div
-              key={index}
-              className="group bg-white rounded-2xl p-8 border border-[#DCEEF2] shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
-            >
-              {/* Icon */}
-              <div className="w-16 h-16 rounded-2xl bg-[#EAF6F8] text-[#0F5B78] flex items-center justify-center group-hover:bg-[#0F5B78] group-hover:text-white transition-all duration-300">
-                {dept.icon}
-              </div>
+        {/* LOADING */}
+        {loading && (
+          <div className="flex justify-center py-12">
+            <div className="w-10 h-10 rounded-full border-4 border-slate-200 border-t-teal-600 animate-spin" />
+          </div>
+        )}
 
-              {/* Title */}
-              <h3 className="text-2xl font-semibold text-[#123044] mt-6">
-                {dept.title}
-              </h3>
-
-              {/* Description */}
-              <p className="text-[#526675] mt-3 leading-7">{dept.desc}</p>
-
-              {/* Explore */}
-              <button
-                type="button"
-                onClick={() => navigate(`/departments/${dept.slug}`)}
-                className="mt-6 text-[#0F5B78] font-semibold group-hover:text-[#123044] transition"
+        {/* DEPARTMENTS */}
+        {!loading && departments.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {departments.map((department) => (
+              <div
+                key={department._id}
+                onClick={() => handleDepartmentClick(department)}
+                className="group cursor-pointer"
               >
-                Explore Department →
-              </button>
-            </div>
-          ))}
-        </div>
+                <div
+                  className="
+                    h-full
+                    bg-white
+                    border border-slate-200
+                    rounded-2xl
+                    p-6
+                    shadow-sm
+                    transition-all
+                    duration-300
+                    hover:-translate-y-2
+                    hover:shadow-xl
+                    hover:border-teal-200
+                  "
+                >
+                  {/* ICON */}
+                  <div
+                    className="
+                      w-14 h-14
+                      rounded-2xl
+                      bg-teal-50
+                      flex items-center justify-center
+                      mb-6
+                      transition-all duration-300
+                      group-hover:bg-teal-600
+                    "
+                  >
+                    <span
+                      className="
+                        text-2xl
+                        transition-all duration-300
+                        group-hover:scale-110
+                      "
+                    >
+                      🏥
+                    </span>
+                  </div>
+
+                  {/* NAME */}
+                  <h3 className="text-xl font-bold text-slate-800 capitalize mb-3">
+                    {department.name}
+                  </h3>
+
+                  {/* DESCRIPTION */}
+                  <p className="text-sm text-slate-500 leading-6 line-clamp-3">
+                    {department.description ||
+                      "Specialized healthcare services provided by experienced medical professionals."}
+                  </p>
+
+                  {/* EXPLORE */}
+                  <div className="mt-6 flex items-center gap-2 text-teal-600 font-semibold text-sm">
+                    <span>Explore Department</span>
+
+                    <span className="transition-transform duration-300 group-hover:translate-x-1">
+                      →
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* EMPTY */}
+        {!loading && departments.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-slate-500">No departments available.</p>
+          </div>
+        )}
       </div>
     </section>
   );
-}
+};
 
 export default DepartmentSection;

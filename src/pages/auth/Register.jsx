@@ -9,7 +9,8 @@ import {
   FaUserMd,
   FaBuilding,
 } from "react-icons/fa";
-import axios from "axios";
+
+import api from "../../services/api";
 
 function Register() {
   const navigate = useNavigate();
@@ -21,7 +22,6 @@ function Register() {
     password: "",
     role: "PATIENT",
 
-    // Doctor fields
     department: "",
     specialization: "",
     qualification: "",
@@ -45,9 +45,7 @@ function Register() {
       try {
         setLoadingDepartments(true);
 
-        const response = await axios.get(
-          "http://localhost:5000/api/departments",
-        );
+        const response = await api.get("/departments");
 
         if (response.data.success) {
           setDepartments(response.data.departments || []);
@@ -84,7 +82,6 @@ function Register() {
       ...prev,
       role,
 
-      // Reset doctor fields when patient selected
       ...(role === "PATIENT"
         ? {
             department: "",
@@ -134,10 +131,7 @@ function Register() {
         return;
       }
 
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        formData,
-      );
+      const response = await api.post("/auth/register", formData);
 
       if (response.data.success) {
         window.alert(
@@ -147,6 +141,8 @@ function Register() {
         );
 
         navigate("/login");
+      } else {
+        setError(response.data.message || "Unable to register.");
       }
     } catch (err) {
       console.error("Registration error:", err);
